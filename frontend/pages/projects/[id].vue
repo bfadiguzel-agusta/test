@@ -25,6 +25,17 @@
         
         <div class="flex items-center space-x-3">
           <button 
+            v-if="isProjectAdmin"
+            @click="showUsersPanel = true"
+            class="btn btn-secondary"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            Kullanıcılar
+          </button>
+          
+          <button 
             v-if="canManageBoards"
             @click="showAddBoard = true"
             class="btn btn-secondary"
@@ -108,6 +119,112 @@
       <p class="mt-1 text-sm text-gray-500">Bu projeye erişim yetkiniz yok veya proje mevcut değil.</p>
     </div>
 
+    <!-- Users Panel (Slide-over) -->
+    <div v-if="showUsersPanel" class="fixed inset-0 z-50 overflow-hidden">
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-black bg-opacity-50" @click="showUsersPanel = false"></div>
+      
+      <!-- Panel -->
+      <div class="absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-xl flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">Proje Kullanıcıları</h2>
+            <button @click="showUsersPanel = false" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <!-- Add User Form -->
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Kullanıcı Ekle</h3>
+            <form @submit.prevent="addUserToProject" class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Email</label>
+                <input
+                  v-model="userSearchQuery"
+                  @input="searchUsers"
+                  type="text"
+                  class="input w-full"
+                  placeholder="kullanici@example.com"
+                  autocomplete="off"
+                />
+                <!-- User search results dropdown -->
+                <div v-if="searchResults.length > 0" class="absolute z-10 mt-1 w-full max-w-md bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  <button
+                    v-for="user in searchResults"
+                    :key="user.id"
+                    type="button"
+                    @click="selectUser(user)"
+                    class="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  >
+                    <div class="font-medium">{{ user.firstName }} {{ user.lastName }}</div>
+                    <div class="text-sm text-gray-500">{{ user.email }}</div>
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                <select v-model="addUserForm.role" class="input w-full">
+                  <option value="viewer">Görüntüleyici</option>
+                  <option value="developer">Geliştirici</option>
+                  <option value="admin">Yönetici</option>
+                </select>
+              </div>
+              
+              <button
+                type="submit"
+                :disabled="!addUserForm.userId || addingUser"
+                class="btn btn-primary w-full"
+              >
+                {{ addingUser ? 'Ekleniyor...' : 'Kullanıcı Ekle' }}
+              </button>
+            </form>
+          </div>
+
+          <!-- Current Users List -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Mevcut Kullanıcılar</h3>
+            <div class="space-y-2">
+              <div
+                v-for="projectUser in project.projectUsers"
+                :key="projectUser.id"
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900">
+                    {{ projectUser.user.firstName }} {{ projectUser.user.lastName }}
+                  </div>
+                  <div class="text-sm text-gray-500">{{ projectUser.user.email }}</div>
+                  <div class="mt-1">
+                    <span :class="getRoleBadgeClass(projectUser.role)" class="px-2 py-1 text-xs font-medium rounded-full">
+                      {{ getRoleLabel(projectUser.role) }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  v-if="projectUser.userId !== authStore.user.id"
+                  @click="removeUserFromProject(projectUser.userId)"
+                  class="ml-3 text-danger-600 hover:text-danger-800"
+                  title="Kullanıcıyı Çıkar"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Board Modal -->
     <div 
       v-if="showAddBoard" 
@@ -176,11 +293,21 @@ const boards = ref([])
 const loading = ref(true)
 const showAddBoard = ref(false)
 const showProjectSettings = ref(false)
+const showUsersPanel = ref(false)
 const creatingBoard = ref(false)
+const addingUser = ref(false)
+const userSearchQuery = ref('')
+const searchResults = ref([])
+let searchTimeout = null
 
 const boardForm = reactive({
   name: '',
   description: ''
+})
+
+const addUserForm = reactive({
+  userId: '',
+  role: 'developer'
 })
 
 const userRole = computed(() => {
@@ -281,8 +408,117 @@ const handleTaskCreated = (newTask) => {
   }
 }
 
+const searchUsers = () => {
+  clearTimeout(searchTimeout)
+  
+  if (!userSearchQuery.value || userSearchQuery.value.length < 2) {
+    searchResults.value = []
+    return
+  }
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const { $api } = useNuxtApp()
+      const users = await $api(`/users/search?q=${encodeURIComponent(userSearchQuery.value)}`)
+      // Exclude users already in the project
+      const existingUserIds = project.value.projectUsers.map(pu => pu.userId)
+      searchResults.value = users.filter(u => !existingUserIds.includes(u.id))
+    } catch (error) {
+      console.error('Kullanıcı arama hatası:', error)
+    }
+  }, 300)
+}
+
+const selectUser = (user) => {
+  addUserForm.userId = user.id
+  userSearchQuery.value = `${user.firstName} ${user.lastName} (${user.email})`
+  searchResults.value = []
+}
+
+const addUserToProject = async () => {
+  if (!addUserForm.userId) return
+  
+  addingUser.value = true
+  try {
+    const { $api } = useNuxtApp()
+    await $api(`/projects/${project.value.id}/users`, {
+      method: 'POST',
+      body: {
+        userId: addUserForm.userId,
+        role: addUserForm.role
+      }
+    })
+    
+    // Refresh project data
+    await fetchProjectData()
+    
+    // Reset form
+    addUserForm.userId = ''
+    addUserForm.role = 'developer'
+    userSearchQuery.value = ''
+    
+    alert('Kullanıcı başarıyla eklendi')
+  } catch (error) {
+    console.error('Kullanıcı eklenemedi:', error)
+    alert(error.data?.message || 'Kullanıcı eklenirken hata oluştu')
+  } finally {
+    addingUser.value = false
+  }
+}
+
+const removeUserFromProject = async (userId) => {
+  if (!confirm('Bu kullanıcıyı projeden çıkarmak istediğinizden emin misiniz?')) return
+  
+  try {
+    const { $api } = useNuxtApp()
+    await $api(`/projects/${project.value.id}/users/${userId}`, {
+      method: 'DELETE'
+    })
+    
+    // Refresh project data
+    await fetchProjectData()
+    
+    alert('Kullanıcı projeden çıkarıldı')
+  } catch (error) {
+    console.error('Kullanıcı çıkarılamadı:', error)
+    alert('Kullanıcı çıkarılırken hata oluştu')
+  }
+}
+
+const getRoleLabel = (role) => {
+  const labels = {
+    'admin': 'Yönetici',
+    'developer': 'Geliştirici',
+    'viewer': 'Görüntüleyici'
+  }
+  return labels[role] || 'Bilinmiyor'
+}
+
+const getRoleBadgeClass = (role) => {
+  const classes = {
+    'admin': 'bg-danger-100 text-danger-800',
+    'developer': 'bg-primary-100 text-primary-800',
+    'viewer': 'bg-gray-100 text-gray-800'
+  }
+  return classes[role] || 'bg-gray-100 text-gray-800'
+}
+
+// Watch for panel state changes to prevent body scroll
+watch(showUsersPanel, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
 onMounted(() => {
   fetchProjectData()
+})
+
+onUnmounted(() => {
+  // Clean up body overflow when component is destroyed
+  document.body.style.overflow = ''
 })
 
 // Watch for route changes

@@ -74,6 +74,13 @@ export const useProjectsStore = defineStore('projects', {
 
   getters: {
     getUserProjectRole: (state) => (projectId: string, userId: string) => {
+      // First check currentProject
+      if (state.currentProject?.id === projectId) {
+        const projectUser = state.currentProject.projectUsers.find(pu => pu.userId === userId)
+        return projectUser?.role || null
+      }
+      
+      // Then check projects array
       const project = state.projects.find(p => p.id === projectId)
       const projectUser = project?.projectUsers.find(pu => pu.userId === userId)
       return projectUser?.role || null

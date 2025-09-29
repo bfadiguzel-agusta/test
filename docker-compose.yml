@@ -19,7 +19,7 @@ services:
     build: ./backend
     container_name: todo-backend
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3001
       DB_HOST: postgres
       DB_PORT: 5432
