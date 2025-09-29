@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 h-10 px-4 py-2;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 h-10 px-4 py-2;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-600 text-white hover:bg-danger-700 h-10 px-4 py-2;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .input {
+    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  .card-content {
+    @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200;
+  }
+}
+
+/* Drag and drop styles */
+.sortable-ghost {
+  @apply opacity-50;
+}
+
+.sortable-chosen {
+  @apply ring-2 ring-primary-500;
+}
+
+.sortable-drag {
+  @apply rotate-2 shadow-lg;
+}
+
+/* Task status colors */
+.task-todo {
+  @apply border-l-4 border-gray-400;
+}
+
+.task-in-progress {
+  @apply border-l-4 border-primary-500;
+}
+
+.task-testing {
+  @apply border-l-4 border-warning-500;
+}
+
+.task-done {
+  @apply border-l-4 border-success-500;
+}
+
+/* Priority colors */
+.priority-low {
+  @apply text-gray-500;
+}
+
+.priority-medium {
+  @apply text-primary-600;
+}
+
+.priority-high {
+  @apply text-warning-600;
+}
+
+.priority-urgent {
+  @apply text-danger-600;
+}
